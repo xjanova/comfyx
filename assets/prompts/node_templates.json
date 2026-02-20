@@ -1,0 +1,40 @@
+{
+    "themes": {
+        "txt2img": {
+            "name": "Text to Image",
+            "name_th": "ข้อความเป็นรูปภาพ",
+            "description": "Generate images from text description",
+            "prompt_hint": "Generate a txt2img workflow with: {user_prompt}"
+        },
+        "img2img": {
+            "name": "Image to Image",
+            "name_th": "รูปภาพเป็นรูปภาพ",
+            "description": "Transform existing images",
+            "prompt_hint": "Generate an img2img workflow that transforms the input image with: {user_prompt}"
+        },
+        "inpainting": {
+            "name": "Inpainting",
+            "name_th": "แก้ไขบางส่วนของภาพ",
+            "description": "Edit specific parts of an image",
+            "prompt_hint": "Generate an inpainting workflow to edit: {user_prompt}"
+        },
+        "upscale": {
+            "name": "Upscale",
+            "name_th": "ขยายภาพ",
+            "description": "Upscale images to higher resolution",
+            "prompt_hint": "Generate an upscale workflow with: {user_prompt}"
+        },
+        "controlnet": {
+            "name": "ControlNet",
+            "name_th": "ControlNet",
+            "description": "Guide generation with control images",
+            "prompt_hint": "Generate a ControlNet workflow using: {user_prompt}"
+        },
+        "video": {
+            "name": "Video Generation",
+            "name_th": "สร้างวีดีโอ",
+            "description": "Generate videos from images or text",
+            "prompt_hint": "Generate a video workflow with: {user_prompt}"
+        }
+    }
+}

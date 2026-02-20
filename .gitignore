@@ -1,0 +1,49 @@
+# Build
+build/
+cmake-build-*/
+out/
+*.obj
+*.o
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+
+# IDE
+.vs/
+.vscode/settings.json
+*.sln
+*.vcxproj*
+*.user
+.idea/
+*.swp
+*.swo
+
+# Runtime data (portable, user-specific)
+data/config.json
+data/license.dat
+data/workflows/*
+data/history/*
+data/cache/*
+data/ai_models/*
+
+# Runtime (embedded ComfyUI - too large for git)
+runtime/python/
+runtime/comfyui/
+runtime/models/
+runtime/custom_nodes/
+runtime/output/
+
+# External dependencies (managed by git submodules)
+# external/ directories are submodules
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fonts (download separately due to license)
+assets/fonts/*.ttf
+assets/fonts/*.otf

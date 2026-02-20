@@ -1,0 +1,55 @@
+{
+    "menu.file": "File",
+    "menu.new_workflow": "New Workflow",
+    "menu.open_workflow": "Open Workflow...",
+    "menu.save_workflow": "Save Workflow",
+    "menu.settings": "Settings",
+    "menu.exit": "Exit",
+    "menu.comfyui": "ComfyUI",
+    "menu.connect": "Connect",
+    "menu.disconnect": "Disconnect",
+    "menu.start_embedded": "Start Embedded Server",
+    "menu.stop_embedded": "Stop Embedded Server",
+    "menu.ai": "AI Engine",
+    "menu.help": "Help",
+    "menu.license": "License",
+    "menu.about": "About",
+
+    "chat.welcome": "Welcome to ComfyX! Describe the workflow you want and AI will generate it for you.",
+    "chat.placeholder": "No messages yet. Type a prompt below to start generating workflows.",
+    "chat.send": "Send",
+    "chat.input_hint": "Describe your workflow... (e.g., 'Generate a portrait with SDXL')",
+
+    "graph.empty": "No workflow loaded. Generate one using the AI Chat panel.",
+    "graph.title": "Node Graph",
+
+    "preview.empty": "No preview available. Execute a workflow to see results here.",
+    "preview.title": "Preview",
+
+    "history.empty": "No workflow history yet.",
+    "history.title": "History",
+
+    "settings.title": "Settings",
+    "settings.comfyui": "ComfyUI",
+    "settings.ai": "AI Engine",
+    "settings.appearance": "Appearance",
+    "settings.mode": "Mode",
+    "settings.port": "Port",
+    "settings.autostart": "Auto-start on launch",
+    "settings.theme": "Theme",
+    "settings.scale": "UI Scale",
+    "settings.language": "Language",
+    "settings.save": "Save",
+    "settings.cancel": "Cancel",
+
+    "license.title": "License",
+    "license.info": "Enter your license key to unlock all features, or start a free trial.",
+    "license.key": "License Key",
+    "license.activate": "Activate",
+    "license.trial": "Start Trial",
+
+    "status.connected": "Connected",
+    "status.disconnected": "Disconnected",
+    "status.running": "Running",
+    "status.generating": "Generating..."
+}

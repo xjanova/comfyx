@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    name: Build & Release
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Configure CMake
+      run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+    - name: Build Release
+      run: cmake --build build --config Release --parallel
+
+    - name: Prepare Portable Package
+      run: |
+        mkdir ComfyX-Portable
+        xcopy /E /I build\bin\Release ComfyX-Portable\
+        mkdir ComfyX-Portable\data
+        mkdir ComfyX-Portable\data\workflows
+        mkdir ComfyX-Portable\data\history
+        mkdir ComfyX-Portable\data\cache
+        mkdir ComfyX-Portable\data\ai_models
+        mkdir ComfyX-Portable\runtime
+
+    - name: Create ZIP
+      run: Compress-Archive -Path ComfyX-Portable\* -DestinationPath ComfyX-Portable-Windows-x64.zip
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ComfyX-Portable-Windows-x64.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}

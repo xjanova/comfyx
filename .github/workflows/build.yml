@@ -1,0 +1,98 @@
+name: Build ComfyX
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Windows Build (MSVC)
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Configure CMake
+      run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ComfyX-Windows-x64
+        path: |
+          build/bin/${{ env.BUILD_TYPE }}/ComfyX.exe
+          build/bin/${{ env.BUILD_TYPE }}/assets/
+        retention-days: 14
+
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Linux Build (GCC)
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake ninja-build \
+          libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev \
+          libxcursor-dev libxinerama-dev libwayland-dev \
+          libxkbcommon-dev
+
+    - name: Configure CMake
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+    - name: Build
+      run: cmake --build build --parallel
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ComfyX-Linux-x64
+        path: |
+          build/bin/ComfyX
+          build/bin/assets/
+        retention-days: 14
+
+  release:
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: Create Release Package
+
+    steps:
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ComfyX-Windows-x64
+        path: ComfyX-Windows
+
+    - name: Package
+      run: |
+        mkdir -p ComfyX-Windows/data/{workflows,history,cache,ai_models}
+        mkdir -p ComfyX-Windows/runtime
+        cd ComfyX-Windows && zip -r ../ComfyX-Portable-Windows-x64.zip .
+
+    - name: Upload Release Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ComfyX-Portable-Windows-x64
+        path: ComfyX-Portable-Windows-x64.zip
+        retention-days: 30
