@@ -1,33 +1,29 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ComfyX.Helpers;
 using ComfyX.Models;
+using ComfyX.Services;
 
 namespace ComfyX.Pages
 {
-    /// <summary>
-    /// AI Chat page - allows users to describe workflows in natural language
-    /// and receive AI-generated ComfyUI workflow responses.
-    /// </summary>
     public partial class ChatPage : UserControl
     {
-        /// <summary>
-        /// Observable collection of chat messages displayed in the conversation.
-        /// </summary>
         public ObservableCollection<ChatMessage> Messages { get; } = new ObservableCollection<ChatMessage>();
+
+        private string _lastWorkflowJson;
+        private bool _isSending;
 
         public ChatPage()
         {
             InitializeComponent();
             MessagesItemsControl.ItemsSource = Messages;
-
-            // Wire up placeholder visibility based on input text
             InputTextBox.TextChanged += InputTextBox_TextChanged;
-
-            // Update welcome/chat visibility when messages change
             Messages.CollectionChanged += Messages_CollectionChanged;
         }
 
@@ -45,18 +41,11 @@ namespace ComfyX.Pages
             ChatContainer.Visibility = hasMessages ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        /// <summary>
-        /// Handles the Send button click.
-        /// </summary>
         private void SendButton_Click(object sender, RoutedEventArgs e)
         {
             SendMessage();
         }
 
-        /// <summary>
-        /// Handles Enter key press in the input box to send the message.
-        /// Shift+Enter inserts a newline instead.
-        /// </summary>
         private void InputTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
@@ -66,26 +55,117 @@ namespace ComfyX.Pages
             }
         }
 
-        /// <summary>
-        /// Sends the current input as a user message, then adds a placeholder AI response.
-        /// </summary>
-        private void SendMessage()
+        private async void SendMessage()
         {
             string text = InputTextBox.Text?.Trim();
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text) || _isSending)
                 return;
+
+            _isSending = true;
+            SendButton.IsEnabled = false;
+            SendButton.Content = "...";
 
             // Add user message
             Messages.Add(new ChatMessage("user", text));
             InputTextBox.Text = string.Empty;
-
-            // Placeholder AI response (will be replaced by real AI integration)
-            Messages.Add(new ChatMessage("assistant",
-                "I understand your request. I'm analyzing the best workflow approach for this...\n\n" +
-                "(AI engine not connected yet. Configure your API key in Settings.)"));
-
-            // Scroll to bottom
             ChatScrollViewer.ScrollToEnd();
+
+            try
+            {
+                // Check if API key is configured
+                var config = AppConfig.Current.AI;
+                string provider = config.ActiveProvider?.ToLowerInvariant() ?? "openai";
+                string apiKey = provider switch
+                {
+                    "claude" => config.ClaudeApiKey,
+                    "gemini" => config.GeminiApiKey,
+                    _ => config.OpenAIApiKey
+                };
+
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    Messages.Add(new ChatMessage("assistant",
+                        $"⚠️ No API key configured for {provider}.\n\n" +
+                        "Please go to Settings → AI Engine and enter your API key."));
+                    ChatScrollViewer.ScrollToEnd();
+                    return;
+                }
+
+                // Add thinking indicator
+                var thinkingMsg = new ChatMessage("assistant", "🔄 Thinking...");
+                Messages.Add(thinkingMsg);
+                ChatScrollViewer.ScrollToEnd();
+
+                // Build conversation history (exclude the thinking message)
+                var history = Messages
+                    .Where(m => m != thinkingMsg)
+                    .Select(m => new ChatMessage(m.Role, m.Content))
+                    .ToList();
+
+                // Remove the user message we just added from history since AIManager adds it
+                if (history.Count > 0 && history.Last().Role == "user")
+                    history.RemoveAt(history.Count - 1);
+
+                // Send to AI
+                string reply = await AIManager.Instance.SendAsync(text, history);
+
+                // Replace thinking message with actual response
+                int thinkingIndex = Messages.IndexOf(thinkingMsg);
+                if (thinkingIndex >= 0)
+                {
+                    Messages.RemoveAt(thinkingIndex);
+                }
+                Messages.Add(new ChatMessage("assistant", reply));
+                ChatScrollViewer.ScrollToEnd();
+
+                // Try to extract workflow JSON from the response
+                _lastWorkflowJson = WorkflowParser.ExtractWorkflowJson(reply);
+                if (_lastWorkflowJson != null && WorkflowParser.ValidateWorkflow(_lastWorkflowJson))
+                {
+                    Logger.Info("Valid ComfyUI workflow detected in AI response.");
+
+                    // Check if ComfyUI is connected and auto-queue
+                    bool connected = await ComfyClient.Instance.CheckConnectionAsync();
+                    if (connected)
+                    {
+                        Messages.Add(new ChatMessage("assistant",
+                            "✅ Workflow detected! Queueing to ComfyUI..."));
+                        ChatScrollViewer.ScrollToEnd();
+
+                        string promptId = await ComfyClient.Instance.QueuePromptAsync(_lastWorkflowJson);
+                        if (promptId != null)
+                        {
+                            Messages.Add(new ChatMessage("assistant",
+                                $"🚀 Workflow queued! (ID: {promptId.Substring(0, Math.Min(8, promptId.Length))}...)\n" +
+                                "Check the Preview tab for results."));
+                        }
+                        else
+                        {
+                            Messages.Add(new ChatMessage("assistant",
+                                "❌ Failed to queue workflow. Check the Log tab for details."));
+                        }
+                    }
+                    else
+                    {
+                        Messages.Add(new ChatMessage("assistant",
+                            "💡 Workflow generated! Start ComfyUI and click 'Start ComfyUI' to connect, " +
+                            "then I can queue it automatically."));
+                    }
+                    ChatScrollViewer.ScrollToEnd();
+                }
+            }
+            catch (Exception ex)
+            {
+                Messages.Add(new ChatMessage("assistant", $"❌ Error: {ex.Message}"));
+                Logger.Error($"Chat error: {ex.Message}");
+                ChatScrollViewer.ScrollToEnd();
+            }
+            finally
+            {
+                _isSending = false;
+                SendButton.IsEnabled = true;
+                SendButton.Content = "Send";
+            }
         }
     }
 }

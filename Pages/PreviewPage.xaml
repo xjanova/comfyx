@@ -7,38 +7,94 @@
              d:DesignHeight="600" d:DesignWidth="800">
 
     <Grid Background="{StaticResource BgSecondaryBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <!-- Placeholder content (shown when no image is loaded) -->
-        <StackPanel x:Name="PlaceholderPanel"
-                    VerticalAlignment="Center" HorizontalAlignment="Center"
-                    Visibility="Visible">
-            <TextBlock Text="Preview"
-                       FontSize="24" FontWeight="Bold"
-                       Foreground="{StaticResource NeonPinkBrush}"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,8" />
-            <TextBlock Text="Generated images will appear here."
-                       FontSize="13"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,4" />
-            <TextBlock Text="Run a workflow from the Node Graph to see results."
-                       FontSize="12"
-                       Foreground="{StaticResource TextMutedBrush}"
-                       HorizontalAlignment="Center" />
-        </StackPanel>
-
-        <!-- Image display area (hidden until an image is loaded) -->
-        <Border x:Name="ImageContainer"
-                Margin="16"
-                Background="{StaticResource BgCardBrush}"
+        <!-- Toolbar -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgPrimaryBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Visibility="Collapsed">
-            <Image x:Name="PreviewImage"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality" />
+                BorderThickness="0,0,0,1"
+                Padding="8,6">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="FitFillButton"
+                            Content="Fit"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="FitFillButton_Click"
+                            MinWidth="60"
+                            Margin="0,0,6,0" />
+                    <Button x:Name="ClearButton"
+                            Content="Clear"
+                            Style="{StaticResource ModernButton}"
+                            Click="ClearButton_Click"
+                            MinWidth="60"
+                            Margin="0,0,6,0" />
+                    <Button x:Name="SaveButton"
+                            Content="Save"
+                            Style="{StaticResource DangerButton}"
+                            Click="SaveButton_Click"
+                            MinWidth="60" />
+                </StackPanel>
+                <TextBlock Text="Preview"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource NeonPinkBrush}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Content area -->
+        <Grid Grid.Row="1">
+            <!-- Placeholder content (shown when no image is loaded) -->
+            <StackPanel x:Name="PlaceholderPanel"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Visibility="Visible">
+                <TextBlock Text="Preview"
+                           FontSize="24" FontWeight="Bold"
+                           Foreground="{StaticResource NeonPinkBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8" />
+                <TextBlock Text="Generated images will appear here."
+                           FontSize="13"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4" />
+                <TextBlock Text="Run a workflow from the Node Graph to see results."
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- Image display area (hidden until an image is loaded) -->
+            <Border x:Name="ImageContainer"
+                    Margin="16"
+                    Background="{StaticResource BgCardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Visibility="Collapsed">
+                <Image x:Name="PreviewImage"
+                       Stretch="Uniform"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+            </Border>
+        </Grid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2"
+                Background="{StaticResource BgPrimaryBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="10,4">
+            <TextBlock x:Name="StatusText"
+                       Text="No image loaded"
+                       FontSize="11"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       VerticalAlignment="Center" />
         </Border>
     </Grid>
 </UserControl>

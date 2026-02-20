@@ -1,12 +1,18 @@
 using System;
+using System.Text.Json;
+using IOPath = System.IO.Path;
+using IOFile = System.IO.File;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Microsoft.Win32;
 using ComfyX.Dialogs;
 using ComfyX.Helpers;
+using ComfyX.Models;
+using ComfyX.Pages;
 using ComfyX.Services;
 
 namespace ComfyX
@@ -44,6 +50,7 @@ namespace ComfyX
         private Page _activePage = Page.Chat;
         private ComfyState _comfyState = ComfyState.Stopped;
         private string _currentLanguage = "EN";
+        private string _lastWorkflowJson;
 
         // ─── Lazy Page Instances ──────────────────────────────────────
         private UserControl _chatPage;
@@ -73,6 +80,12 @@ namespace ComfyX
             // Initialize license
             await LicenseGuard.Instance.InitializeAsync();
 
+            // Initialize I18n from config
+            string lang = AppConfig.Current.Language ?? "en";
+            I18n.SetLanguage(lang);
+            _currentLanguage = lang.Equals("th", StringComparison.OrdinalIgnoreCase) ? "TH" : "EN";
+            txtLanguage.Text = _currentLanguage;
+
             // Wire ComfyUI process events
             ComfyProcess.Instance.StateChanged += (running) =>
             {
@@ -91,6 +104,42 @@ namespace ComfyX
                     }
                 });
             };
+
+            // Wire WebSocket progress events
+            ComfyWebSocketClient.Instance.ProgressUpdated += OnProgressUpdated;
+            ComfyWebSocketClient.Instance.ExecutionCompleted += OnExecutionCompleted;
+
+            // Auto-connect to ComfyUI if config says autoStart
+            if (AppConfig.Current.ComfyUI.AutoStart)
+            {
+                try
+                {
+                    SetComfyState(ComfyState.Starting);
+                    txtStatusBar.Text = "Auto-connecting to ComfyUI...";
+
+                    bool alreadyRunning = await ComfyClient.Instance.CheckConnectionAsync();
+                    if (alreadyRunning)
+                    {
+                        SetComfyState(ComfyState.Running);
+                        await ComfyWebSocketClient.Instance.ConnectAsync(
+                            ComfyClient.Instance.BaseUrl.Replace("http", "ws"));
+                    }
+                    else if (string.Equals(AppConfig.Current.ComfyUI.Mode, "embedded", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ComfyProcess.Instance.Start();
+                    }
+                    else
+                    {
+                        SetComfyState(ComfyState.Stopped);
+                        txtStatusBar.Text = "ComfyUI not detected. Start manually.";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Auto-connect failed: {ex.Message}");
+                    SetComfyState(ComfyState.Error);
+                }
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -231,16 +280,38 @@ namespace ComfyX
         /// Error state can be triggered externally; clicking Retry goes back to Starting.
         /// This is a placeholder — actual process management will be added later.
         /// </summary>
-        private void BtnComfyToggle_Click(object sender, RoutedEventArgs e)
+        private async void BtnComfyToggle_Click(object sender, RoutedEventArgs e)
         {
             switch (_comfyState)
             {
                 case ComfyState.Stopped:
                 case ComfyState.Error:
                     SetComfyState(ComfyState.Starting);
+                    txtStatusBar.Text = "Connecting to ComfyUI...";
                     try
                     {
-                        ComfyProcess.Instance.Start();
+                        // Check if ComfyUI is already running externally
+                        bool alreadyRunning = await ComfyClient.Instance.CheckConnectionAsync();
+                        if (alreadyRunning)
+                        {
+                            SetComfyState(ComfyState.Running);
+                            await ComfyWebSocketClient.Instance.ConnectAsync(
+                                ComfyClient.Instance.BaseUrl.Replace("http", "ws"));
+                            return;
+                        }
+
+                        if (string.Equals(AppConfig.Current.ComfyUI.Mode, "external", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // External mode: just try to connect, no process start
+                            Logger.Warn("ComfyUI not reachable at configured external URL.");
+                            SetComfyState(ComfyState.Error);
+                            txtStatusBar.Text = "ComfyUI not reachable. Check URL in Settings.";
+                        }
+                        else
+                        {
+                            // Embedded mode: start process
+                            ComfyProcess.Instance.Start();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -251,6 +322,7 @@ namespace ComfyX
                 case ComfyState.Starting:
                 case ComfyState.Running:
                     ComfyProcess.Instance.Stop();
+                    await ComfyWebSocketClient.Instance.DisconnectAsync();
                     SetComfyState(ComfyState.Stopped);
                     break;
             }
@@ -332,6 +404,12 @@ namespace ComfyX
         {
             _currentLanguage = _currentLanguage == "EN" ? "TH" : "EN";
             txtLanguage.Text = _currentLanguage;
+
+            string langCode = _currentLanguage == "TH" ? "th" : "en";
+            I18n.SetLanguage(langCode);
+            AppConfig.Current.Language = langCode;
+            AppConfig.Save();
+            Logger.Info($"Language changed to: {langCode}");
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -340,23 +418,160 @@ namespace ComfyX
 
         private void BtnNew_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Create new workflow
+            _lastWorkflowJson = null;
+
+            // Reset chat page messages
+            if (_chatPage is ChatPage chat)
+            {
+                chat.Messages.Clear();
+            }
+
+            // Clear preview
+            if (_previewPage is PreviewPage preview)
+            {
+                preview.ClearPreview();
+            }
+
+            NavigateTo(Page.Chat);
+            txtStatusBar.Text = "New workflow created.";
+            Logger.Info("New workflow created.");
         }
 
         private void BtnOpen_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Open workflow file dialog
+            var dlg = new OpenFileDialog
+            {
+                Title = "Open ComfyUI Workflow",
+                Filter = "JSON Workflow Files (*.json)|*.json|All Files (*.*)|*.*",
+                DefaultExt = ".json"
+            };
+
+            if (dlg.ShowDialog(this) == true)
+            {
+                try
+                {
+                    string json = IOFile.ReadAllText(dlg.FileName);
+
+                    // Validate it's parseable JSON
+                    using (JsonDocument.Parse(json)) { }
+
+                    _lastWorkflowJson = json;
+                    txtStatusBar.Text = $"Loaded: {IOPath.GetFileName(dlg.FileName)}";
+                    Logger.Info($"Workflow loaded from: {dlg.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Failed to open workflow: {ex.Message}");
+                    MessageBox.Show(this, $"Failed to open workflow:\n{ex.Message}",
+                        "Open Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Save current workflow
+            if (string.IsNullOrEmpty(_lastWorkflowJson))
+            {
+                MessageBox.Show(this, "No workflow to save. Generate or open a workflow first.",
+                    "Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new SaveFileDialog
+            {
+                Title = "Save ComfyUI Workflow",
+                Filter = "JSON Workflow Files (*.json)|*.json|All Files (*.*)|*.*",
+                DefaultExt = ".json",
+                FileName = "workflow.json"
+            };
+
+            if (dlg.ShowDialog(this) == true)
+            {
+                try
+                {
+                    IOFile.WriteAllText(dlg.FileName, _lastWorkflowJson);
+                    txtStatusBar.Text = $"Saved: {IOPath.GetFileName(dlg.FileName)}";
+                    Logger.Info($"Workflow saved to: {dlg.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Failed to save workflow: {ex.Message}");
+                    MessageBox.Show(this, $"Failed to save workflow:\n{ex.Message}",
+                        "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void BtnLicense_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new LicenseDialog { Owner = this };
             dialog.ShowDialog();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // WebSocket Event Handlers
+        // ═══════════════════════════════════════════════════════════════
+
+        private void OnProgressUpdated(ComfyProgress progress)
+        {
+            txtStatusBar.Text = $"Generating... {progress.Percent:F0}% ({progress.Value}/{progress.Max})";
+        }
+
+        private async void OnExecutionCompleted(string promptId)
+        {
+            try
+            {
+                Logger.Info($"Execution completed: {promptId}");
+                txtStatusBar.Text = "Execution completed! Fetching images...";
+
+                // Wait a moment for ComfyUI to save the image
+                await Task.Delay(500);
+
+                string historyJson = await ComfyClient.Instance.GetHistoryAsync(promptId);
+                if (historyJson == null) return;
+
+                using var doc = JsonDocument.Parse(historyJson);
+                var root = doc.RootElement;
+
+                // Parse: { "promptId": { "outputs": { "nodeId": { "images": [{ "filename": "...", "subfolder": "...", "type": "output" }] } } } }
+                foreach (var promptEntry in root.EnumerateObject())
+                {
+                    if (!promptEntry.Value.TryGetProperty("outputs", out var outputs)) continue;
+
+                    foreach (var nodeOutput in outputs.EnumerateObject())
+                    {
+                        if (!nodeOutput.Value.TryGetProperty("images", out var images)) continue;
+
+                        foreach (var img in images.EnumerateArray())
+                        {
+                            string filename = img.GetProperty("filename").GetString();
+                            string subfolder = img.TryGetProperty("subfolder", out var sf) ? sf.GetString() ?? "" : "";
+                            string type = img.TryGetProperty("type", out var t) ? t.GetString() ?? "output" : "output";
+
+                            byte[] imageData = await ComfyClient.Instance.GetImageAsync(filename, subfolder, type);
+                            if (imageData != null && imageData.Length > 0)
+                            {
+                                // Save to temp and show in preview
+                                string tempPath = IOPath.Combine(IOPath.GetTempPath(), $"comfyx_{filename}");
+                                IOFile.WriteAllBytes(tempPath, imageData);
+
+                                if (_previewPage is PreviewPage preview)
+                                {
+                                    preview.ShowImage(tempPath);
+                                }
+                                NavigateTo(Page.Preview);
+                                txtStatusBar.Text = $"Image ready: {filename}";
+                                Logger.Info($"Preview image loaded: {filename}");
+                                return; // Show first image
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to fetch execution results: {ex.Message}");
+            }
         }
     }
 }
