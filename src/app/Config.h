@@ -40,7 +40,7 @@ struct ComfyUIConfig {
 struct AppConfig {
     std::string language = "en"; // "en" or "th"
     float uiScale = 1.0f;
-    std::string theme = "midnight"; // "midnight", "light"
+    std::string theme = "modern"; // "modern", "midnight", "light"
     bool showWelcome = true;
 
     AIConfig ai;

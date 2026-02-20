@@ -1,8 +1,8 @@
 {
     "menu.file": "File",
-    "menu.new_workflow": "New Workflow",
-    "menu.open_workflow": "Open Workflow...",
-    "menu.save_workflow": "Save Workflow",
+    "menu.new_workflow": "New",
+    "menu.open_workflow": "Open",
+    "menu.save_workflow": "Save",
     "menu.settings": "Settings",
     "menu.exit": "Exit",
     "menu.comfyui": "ComfyUI",
@@ -15,19 +15,25 @@
     "menu.license": "License",
     "menu.about": "About",
 
-    "chat.welcome": "Welcome to ComfyX! Describe the workflow you want and AI will generate it for you.",
+    "topbar.start": "Start ComfyUI",
+    "topbar.stop": "Stop ComfyUI",
+    "topbar.starting": "Starting...",
+    "topbar.retry": "Retry ComfyUI",
+
+    "chat.welcome": "Describe the workflow you want and AI will generate it.",
     "chat.placeholder": "No messages yet. Type a prompt below to start generating workflows.",
     "chat.send": "Send",
-    "chat.input_hint": "Describe your workflow... (e.g., 'Generate a portrait with SDXL')",
+    "chat.input_hint": "Describe your workflow...",
 
-    "graph.empty": "No workflow loaded. Generate one using the AI Chat panel.",
+    "graph.empty": "No workflow loaded. Use AI Chat to generate one.",
     "graph.title": "Node Graph",
 
-    "preview.empty": "No preview available. Execute a workflow to see results here.",
+    "preview.empty": "No preview available. Execute a workflow to see results.",
     "preview.title": "Preview",
 
-    "history.empty": "No workflow history yet.",
-    "history.title": "History",
+    "log.title": "Activity Log",
+    "log.clear": "Clear",
+    "log.empty": "No log entries yet.",
 
     "settings.title": "Settings",
     "settings.comfyui": "ComfyUI",

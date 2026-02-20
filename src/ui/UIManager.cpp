@@ -37,8 +37,10 @@ bool UIManager::initialize(GLFWwindow* window) {
     auto& config = Config::instance().get();
     if (config.theme == "light") {
         setTheme(Theme::Style::Light);
-    } else {
+    } else if (config.theme == "midnight") {
         setTheme(Theme::Style::Midnight);
+    } else {
+        setTheme(Theme::Style::Modern);
     }
 
     m_scale = config.uiScale;
