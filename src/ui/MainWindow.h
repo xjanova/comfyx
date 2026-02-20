@@ -15,8 +15,6 @@ private:
     MainWindow() = default;
 
     void renderMenuBar();
-    void renderToolbar();
-    void renderStatusBar();
     void renderDockSpace();
 
     // Panels

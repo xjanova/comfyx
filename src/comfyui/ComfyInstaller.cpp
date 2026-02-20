@@ -1,9 +1,11 @@
 #include "ComfyInstaller.h"
 #include "app/PortablePaths.h"
 
+#include <nlohmann/json.hpp>
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 namespace ComfyX {
 
@@ -14,7 +16,12 @@ ComfyInstaller& ComfyInstaller::instance() {
 
 bool ComfyInstaller::isInstalled() const {
     auto& paths = PortablePaths::instance();
-    return std::filesystem::exists(paths.pythonDir() / "python.exe") &&
+#ifdef _WIN32
+    const char* pythonExe = "python.exe";
+#else
+    const char* pythonExe = "python3";
+#endif
+    return std::filesystem::exists(paths.pythonDir() / pythonExe) &&
            std::filesystem::exists(paths.comfyuiDir() / "main.py");
 }
 
@@ -25,7 +32,10 @@ void ComfyInstaller::startInstall(ProgressCallback onProgress) {
 
     m_onProgress = onProgress;
     m_cancelled = false;
-    m_error.clear();
+    {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
+        m_error.clear();
+    }
     m_state = State::Downloading;
 
     if (m_installThread.joinable()) {
@@ -85,19 +95,26 @@ void ComfyInstaller::installThread() {
             setProgress(100.0f, "Installation complete!");
             m_state = State::Complete;
         } else {
-            m_error = "Installation verification failed";
+            {
+                std::lock_guard<std::mutex> lock(m_stringMutex);
+                m_error = "Installation verification failed";
+            }
             m_state = State::Error;
         }
 
     } catch (const std::exception& e) {
-        m_error = e.what();
+        {
+            std::lock_guard<std::mutex> lock(m_stringMutex);
+            m_error = e.what();
+        }
         m_state = State::Error;
         std::cerr << "[Installer] Error: " << e.what() << std::endl;
     }
 }
 
 bool ComfyInstaller::linkExternalComfyUI(const std::string& comfyuiPath) {
-    if (!std::filesystem::exists(comfyuiPath + "/main.py")) {
+    if (!std::filesystem::exists(std::filesystem::path(comfyuiPath) / "main.py")) {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
         m_error = "Invalid ComfyUI directory (main.py not found)";
         return false;
     }
@@ -116,6 +133,7 @@ bool ComfyInstaller::linkExternalComfyUI(const std::string& comfyuiPath) {
         std::cout << "[Installer] Linked to external ComfyUI: " << comfyuiPath << std::endl;
         return true;
     } catch (const std::exception& e) {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
         m_error = e.what();
         return false;
     }
@@ -123,7 +141,10 @@ bool ComfyInstaller::linkExternalComfyUI(const std::string& comfyuiPath) {
 
 void ComfyInstaller::setProgress(float percent, const std::string& status) {
     m_progress = percent;
-    m_status = status;
+    {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
+        m_status = status;
+    }
     if (m_onProgress) m_onProgress(percent, status);
     std::cout << "[Installer] " << (int)percent << "% - " << status << std::endl;
 }

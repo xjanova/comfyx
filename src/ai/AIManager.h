@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <mutex>
 
 namespace ComfyX {
 
@@ -34,7 +35,12 @@ public:
     void cancel();
 
     bool isGenerating() const { return m_generating; }
-    const std::vector<ChatMessage>& getHistory() const { return m_history; }
+
+    std::vector<ChatMessage> getHistory() const {
+        std::lock_guard<std::mutex> lock(m_historyMutex);
+        return m_history;
+    }
+
     void clearHistory();
 
     // Active provider
@@ -43,6 +49,7 @@ public:
 private:
     AIManager() = default;
 
+    mutable std::mutex m_historyMutex;
     std::vector<ChatMessage> m_history;
     std::atomic<bool> m_generating{false};
     std::atomic<bool> m_cancelled{false};

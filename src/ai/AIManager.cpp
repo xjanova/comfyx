@@ -25,7 +25,10 @@ void AIManager::generateWorkflow(const std::string& userPrompt,
     m_cancelled = false;
 
     // Add user message to history
-    m_history.push_back({ChatMessage::User, userPrompt});
+    {
+        std::lock_guard<std::mutex> lock(m_historyMutex);
+        m_history.push_back({ChatMessage::User, userPrompt});
+    }
 
     if (m_genThread.joinable()) {
         m_genThread.join();
@@ -42,10 +45,12 @@ void AIManager::generateWorkflow(const std::string& userPrompt,
             std::string provider = config.ai.activeProvider;
 
             if (provider == "openai" || provider == "claude" || provider == "gemini") {
+                // CloudAI::generate returns the full response and also calls the
+                // callback with the content. We use the return value only to avoid
+                // double-accumulation.
                 fullResponse = CloudAI::generate(systemPrompt, userPrompt, provider,
                     [&](const std::string& token) {
                         if (m_cancelled) return;
-                        fullResponse += token;
                         if (onToken) onToken(token);
                     }
                 );
@@ -61,7 +66,10 @@ void AIManager::generateWorkflow(const std::string& userPrompt,
             }
 
             if (!m_cancelled) {
-                m_history.push_back({ChatMessage::Assistant, fullResponse});
+                {
+                    std::lock_guard<std::mutex> lock(m_historyMutex);
+                    m_history.push_back({ChatMessage::Assistant, fullResponse});
+                }
                 if (onComplete) onComplete(fullResponse, true);
             }
 
@@ -86,6 +94,7 @@ void AIManager::cancel() {
 }
 
 void AIManager::clearHistory() {
+    std::lock_guard<std::mutex> lock(m_historyMutex);
     m_history.clear();
 }
 

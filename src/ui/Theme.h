@@ -1,7 +1,5 @@
 #pragma once
 
-struct ImVec4;
-
 namespace ComfyX {
 
 class Theme {

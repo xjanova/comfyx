@@ -4,9 +4,12 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/types.h>
 #endif
 
 namespace ComfyX {
@@ -23,7 +26,11 @@ public:
     void stop();
     bool isRunning() const { return m_state == State::Running; }
     State getState() const { return m_state; }
-    std::string getError() const { return m_error; }
+
+    std::string getError() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_error;
+    }
 
     bool isRuntimeInstalled() const;
     std::string getPythonPath() const;
@@ -31,8 +38,11 @@ public:
 
     void onLog(LogCallback cb) { m_onLog = cb; }
 
-    // Get recent log lines
-    const std::vector<std::string>& getLog() const { return m_logBuffer; }
+    // Get copy of recent log lines (thread-safe)
+    std::vector<std::string> getLog() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_logBuffer;
+    }
 
 private:
     ComfyProcess() = default;
@@ -42,6 +52,7 @@ private:
     void appendLog(const std::string& line);
 
     std::atomic<State> m_state{State::Stopped};
+    mutable std::mutex m_mutex;
     std::string m_error;
     int m_port = 8188;
 

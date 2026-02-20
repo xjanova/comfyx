@@ -22,8 +22,11 @@ jobs:
     - name: Setup MSVC
       uses: ilammy/msvc-dev-cmd@v1
 
+    - name: Install OpenSSL
+      run: choco install openssl -y --no-progress
+
     - name: Configure CMake
-      run: cmake -B build -G "Visual Studio 17 2022" -A x64
+      run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL"
 
     - name: Build Release
       run: cmake --build build --config Release --parallel

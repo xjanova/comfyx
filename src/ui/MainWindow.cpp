@@ -4,6 +4,8 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <cstring>
+#include <cstdio>
 
 namespace ComfyX {
 
@@ -235,8 +237,8 @@ void MainWindow::renderSettingsPanel() {
                 }
 
                 if (config.comfyui.mode == "external") {
-                    char urlBuf[256];
-                    strncpy(urlBuf, config.comfyui.externalUrl.c_str(), sizeof(urlBuf) - 1);
+                    char urlBuf[256] = {};
+                    snprintf(urlBuf, sizeof(urlBuf), "%s", config.comfyui.externalUrl.c_str());
                     if (ImGui::InputText("URL", urlBuf, sizeof(urlBuf))) {
                         config.comfyui.externalUrl = urlBuf;
                     }
@@ -252,32 +254,32 @@ void MainWindow::renderSettingsPanel() {
             if (ImGui::BeginTabItem(I18n::t("settings.ai").c_str())) {
                 // OpenAI
                 if (ImGui::CollapsingHeader("OpenAI")) {
-                    char buf[256];
-                    strncpy(buf, config.ai.openaiApiKey.c_str(), sizeof(buf) - 1);
+                    char buf[256] = {};
+                    snprintf(buf, sizeof(buf), "%s", config.ai.openaiApiKey.c_str());
                     if (ImGui::InputText("API Key##openai", buf, sizeof(buf), ImGuiInputTextFlags_Password)) {
                         config.ai.openaiApiKey = buf;
                     }
                 }
                 // Claude
                 if (ImGui::CollapsingHeader("Anthropic Claude")) {
-                    char buf[256];
-                    strncpy(buf, config.ai.claudeApiKey.c_str(), sizeof(buf) - 1);
+                    char buf[256] = {};
+                    snprintf(buf, sizeof(buf), "%s", config.ai.claudeApiKey.c_str());
                     if (ImGui::InputText("API Key##claude", buf, sizeof(buf), ImGuiInputTextFlags_Password)) {
                         config.ai.claudeApiKey = buf;
                     }
                 }
                 // Gemini
                 if (ImGui::CollapsingHeader("Google Gemini")) {
-                    char buf[256];
-                    strncpy(buf, config.ai.geminiApiKey.c_str(), sizeof(buf) - 1);
+                    char buf[256] = {};
+                    snprintf(buf, sizeof(buf), "%s", config.ai.geminiApiKey.c_str());
                     if (ImGui::InputText("API Key##gemini", buf, sizeof(buf), ImGuiInputTextFlags_Password)) {
                         config.ai.geminiApiKey = buf;
                     }
                 }
                 // Local AI
                 if (ImGui::CollapsingHeader("Local AI (llama.cpp)")) {
-                    char buf[512];
-                    strncpy(buf, config.ai.localModelPath.c_str(), sizeof(buf) - 1);
+                    char buf[512] = {};
+                    snprintf(buf, sizeof(buf), "%s", config.ai.localModelPath.c_str());
                     if (ImGui::InputText("Model Path", buf, sizeof(buf))) {
                         config.ai.localModelPath = buf;
                     }

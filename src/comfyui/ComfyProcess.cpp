@@ -17,12 +17,21 @@ ComfyProcess::~ComfyProcess() {
 
 bool ComfyProcess::isRuntimeInstalled() const {
     auto& paths = PortablePaths::instance();
-    return std::filesystem::exists(paths.pythonDir() / "python.exe") &&
+#ifdef _WIN32
+    const char* pythonExe = "python.exe";
+#else
+    const char* pythonExe = "python3";
+#endif
+    return std::filesystem::exists(paths.pythonDir() / pythonExe) &&
            std::filesystem::exists(paths.comfyuiDir() / "main.py");
 }
 
 std::string ComfyProcess::getPythonPath() const {
+#ifdef _WIN32
     return (PortablePaths::instance().pythonDir() / "python.exe").string();
+#else
+    return (PortablePaths::instance().pythonDir() / "python3").string();
+#endif
 }
 
 std::string ComfyProcess::getComfyUIPath() const {
@@ -36,16 +45,22 @@ bool ComfyProcess::start(int port) {
     }
 
     if (!isRuntimeInstalled()) {
-        m_error = "ComfyUI runtime not installed. Run the installer first.";
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_error = "ComfyUI runtime not installed. Run the installer first.";
+        }
         m_state = State::Error;
-        appendLog("[ComfyProcess] " + m_error);
+        appendLog("[ComfyProcess] ComfyUI runtime not installed.");
         return false;
     }
 
     m_port = port;
     m_state = State::Starting;
     m_shouldStop = false;
-    m_error.clear();
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_error.clear();
+    }
 
     appendLog("[ComfyProcess] Starting ComfyUI on port " + std::to_string(port) + "...");
 
@@ -58,6 +73,7 @@ bool ComfyProcess::start(int port) {
 
     HANDLE pipeWrite;
     if (!CreatePipe(&m_pipeRead, &pipeWrite, &sa, 0)) {
+        std::lock_guard<std::mutex> lock(m_mutex);
         m_error = "Failed to create pipe";
         m_state = State::Error;
         return false;
@@ -94,7 +110,10 @@ bool ComfyProcess::start(int port) {
     CloseHandle(pipeWrite);
 
     if (!success) {
-        m_error = "Failed to start ComfyUI process (error " + std::to_string(GetLastError()) + ")";
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_error = "Failed to start ComfyUI process (error " + std::to_string(GetLastError()) + ")";
+        }
         m_state = State::Error;
         CloseHandle(m_pipeRead);
         m_pipeRead = INVALID_HANDLE_VALUE;
@@ -113,7 +132,10 @@ bool ComfyProcess::start(int port) {
     return true;
 #else
     // Linux/Mac implementation would use fork/exec
-    m_error = "Embedded mode not yet supported on this platform";
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_error = "Embedded mode not yet supported on this platform";
+    }
     m_state = State::Error;
     return false;
 #endif
@@ -167,9 +189,13 @@ void ComfyProcess::monitorProcess() {
             DWORD exitCode;
             if (GetExitCodeProcess(m_processHandle, &exitCode) && exitCode != STILL_ACTIVE) {
                 if (!m_shouldStop) {
-                    m_error = "ComfyUI process exited with code " + std::to_string(exitCode);
+                    std::string errMsg = "ComfyUI process exited with code " + std::to_string(exitCode);
+                    {
+                        std::lock_guard<std::mutex> lock(m_mutex);
+                        m_error = errMsg;
+                    }
                     m_state = State::Error;
-                    appendLog("[ComfyProcess] " + m_error);
+                    appendLog("[ComfyProcess] " + errMsg);
                 }
                 break;
             }
@@ -181,9 +207,12 @@ void ComfyProcess::monitorProcess() {
 }
 
 void ComfyProcess::appendLog(const std::string& line) {
-    m_logBuffer.push_back(line);
-    if (m_logBuffer.size() > MAX_LOG_LINES) {
-        m_logBuffer.erase(m_logBuffer.begin());
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_logBuffer.push_back(line);
+        if (m_logBuffer.size() > MAX_LOG_LINES) {
+            m_logBuffer.erase(m_logBuffer.begin());
+        }
     }
     if (m_onLog) m_onLog(line);
     std::cout << line << std::endl;

@@ -8,6 +8,7 @@ void Theme::apply(Style style) {
     switch (style) {
         case Style::Midnight: applyMidnight(); break;
         case Style::Light:    applyLight(); break;
+        default:              applyMidnight(); break;
     }
 }
 

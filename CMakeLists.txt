@@ -63,10 +63,22 @@ target_link_libraries(imgui_node_editor PUBLIC imgui)
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/nlohmann-json)
 
-# cpp-httplib (header-only)
+# cpp-httplib (header-only) with SSL support
 set(HTTPLIB_DIR ${CMAKE_SOURCE_DIR}/external/cpp-httplib)
 add_library(httplib INTERFACE)
 target_include_directories(httplib INTERFACE ${HTTPLIB_DIR})
+
+# Try to find OpenSSL for HTTPS support (required for cloud AI APIs and license)
+find_package(OpenSSL QUIET)
+if(OPENSSL_FOUND)
+    message(STATUS "OpenSSL found - HTTPS enabled")
+    target_compile_definitions(httplib INTERFACE CPPHTTPLIB_OPENSSL_SUPPORT)
+    target_link_libraries(httplib INTERFACE OpenSSL::SSL OpenSSL::Crypto)
+else()
+    message(WARNING "OpenSSL not found - HTTPS disabled. Cloud AI APIs and license system will not work.")
+    message(WARNING "Install OpenSSL or set OPENSSL_ROOT_DIR to enable HTTPS support.")
+endif()
+
 if(WIN32)
     target_link_libraries(httplib INTERFACE ws2_32 crypt32)
 endif()

@@ -2,6 +2,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <atomic>
 #include <nlohmann/json.hpp>
 
 namespace ix { class WebSocket; }
@@ -39,7 +40,7 @@ private:
     void handleMessage(const std::string& msg);
 
     std::unique_ptr<ix::WebSocket> m_ws;
-    bool m_connected = false;
+    std::atomic<bool> m_connected{false};
 
     StatusCallback m_onStatus;
     ProgressCallback m_onProgress;

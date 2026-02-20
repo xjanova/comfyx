@@ -34,9 +34,9 @@ bool LicenseGuard::isFeatureAvailable(Feature feature) const {
             return isPaid;
         case Feature::WorkflowHistory:
             return true; // Always available, but limited for demo
+        default:
+            return false;
     }
-
-    return false;
 }
 
 bool LicenseGuard::canGenerateWorkflow() const {
@@ -121,12 +121,12 @@ void LicenseGuard::resetDailyCountIfNeeded() {
 
 std::string LicenseGuard::getCurrentDate() const {
     auto now = std::chrono::system_clock::now();
-    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto nowTimeT = std::chrono::system_clock::to_time_t(now);
     std::tm tm = {};
 #ifdef _WIN32
-    localtime_s(&tm, &time_t);
+    localtime_s(&tm, &nowTimeT);
 #else
-    localtime_r(&time_t, &tm);
+    localtime_r(&nowTimeT, &tm);
 #endif
     std::stringstream ss;
     ss << std::put_time(&tm, "%Y-%m-%d");

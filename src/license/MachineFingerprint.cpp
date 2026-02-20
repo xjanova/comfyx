@@ -27,13 +27,24 @@ std::string MachineFingerprint::getFingerprint() {
 
 std::string MachineFingerprint::getOSInfo() {
 #ifdef _WIN32
-    OSVERSIONINFOW info = {};
-    info.dwOSVersionInfoSize = sizeof(info);
-
-    std::stringstream ss;
-    ss << "Windows " << info.dwMajorVersion << "." << info.dwMinorVersion
-       << " Build " << info.dwBuildNumber;
-    return ss.str();
+    // Use RtlGetVersion via NTDLL for accurate version (GetVersionEx lies on Win 8.1+)
+    using RtlGetVersionFunc = LONG(WINAPI*)(PRTL_OSVERSIONINFOW);
+    HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    if (ntdll) {
+        auto RtlGetVersion = reinterpret_cast<RtlGetVersionFunc>(
+            GetProcAddress(ntdll, "RtlGetVersion"));
+        if (RtlGetVersion) {
+            RTL_OSVERSIONINFOW info = {};
+            info.dwOSVersionInfoSize = sizeof(info);
+            if (RtlGetVersion(&info) == 0) {
+                std::stringstream ss;
+                ss << "Windows " << info.dwMajorVersion << "." << info.dwMinorVersion
+                   << " Build " << info.dwBuildNumber;
+                return ss.str();
+            }
+        }
+    }
+    return "Windows (version unknown)";
 #else
     return "Unknown OS";
 #endif
@@ -78,6 +89,17 @@ std::string MachineFingerprint::getCPUId() {
 #endif
 }
 
+// Helper: DJB2 fallback hash (non-cryptographic, for identification only)
+static std::string djb2Hash(const std::string& input) {
+    unsigned long h = 5381;
+    for (char c : input) {
+        h = ((h << 5) + h) + c;
+    }
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0') << std::setw(16) << h;
+    return ss.str();
+}
+
 std::string MachineFingerprint::sha256(const std::string& input) {
 #ifdef _WIN32
     HCRYPTPROV hProv = 0;
@@ -86,48 +108,39 @@ std::string MachineFingerprint::sha256(const std::string& input) {
     DWORD hashLen = 32;
 
     if (!CryptAcquireContextW(&hProv, nullptr, nullptr, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-        goto fallback;
+        return djb2Hash(input);
     }
 
     if (!CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash)) {
         CryptReleaseContext(hProv, 0);
-        goto fallback;
+        return djb2Hash(input);
     }
 
     if (!CryptHashData(hHash, (const BYTE*)input.c_str(), (DWORD)input.size(), 0)) {
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
-        goto fallback;
+        return djb2Hash(input);
     }
 
     if (!CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0)) {
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
-        goto fallback;
+        return djb2Hash(input);
     }
 
     CryptDestroyHash(hHash);
     CryptReleaseContext(hProv, 0);
 
-    {
-        std::stringstream ss;
-        ss << std::hex << std::setfill('0');
-        for (DWORD i = 0; i < hashLen; i++) {
-            ss << std::setw(2) << (int)hash[i];
-        }
-        return ss.str();
-    }
-
-fallback:
-#endif
-    // Simple fallback hash (not cryptographic, just for ID purposes)
-    unsigned long h = 5381;
-    for (char c : input) {
-        h = ((h << 5) + h) + c;
-    }
     std::stringstream ss;
-    ss << std::hex << std::setfill('0') << std::setw(16) << h;
+    ss << std::hex << std::setfill('0');
+    for (DWORD i = 0; i < hashLen; i++) {
+        ss << std::setw(2) << (int)hash[i];
+    }
     return ss.str();
+#else
+    // Fallback hash (not cryptographic, just for ID purposes)
+    return djb2Hash(input);
+#endif
 }
 
 } // namespace ComfyX

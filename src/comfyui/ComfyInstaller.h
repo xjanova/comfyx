@@ -3,6 +3,7 @@
 #include <functional>
 #include <atomic>
 #include <thread>
+#include <mutex>
 
 namespace ComfyX {
 
@@ -20,8 +21,16 @@ public:
 
     State getState() const { return m_state; }
     float getProgress() const { return m_progress; }
-    std::string getStatus() const { return m_status; }
-    std::string getError() const { return m_error; }
+
+    std::string getStatus() const {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
+        return m_status;
+    }
+
+    std::string getError() const {
+        std::lock_guard<std::mutex> lock(m_stringMutex);
+        return m_error;
+    }
 
     // Use existing ComfyUI installation
     bool linkExternalComfyUI(const std::string& comfyuiPath);
@@ -33,6 +42,7 @@ private:
 
     std::atomic<State> m_state{State::Idle};
     std::atomic<float> m_progress{0.0f};
+    mutable std::mutex m_stringMutex;
     std::string m_status;
     std::string m_error;
     std::atomic<bool> m_cancelled{false};
