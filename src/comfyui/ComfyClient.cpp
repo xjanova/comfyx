@@ -142,7 +142,7 @@ bool ComfyClient::uploadImage(const std::string& filepath, const std::string& su
         httplib::Client cli(m_baseUrl);
         cli.set_connection_timeout(30);
 
-        httplib::MultipartFormDataItems items;
+        httplib::UploadFormDataItems items;
         std::ifstream file(filepath, std::ios::binary);
         std::string content((std::istreambuf_iterator<char>(file)),
                            std::istreambuf_iterator<char>());

@@ -85,6 +85,7 @@ endif()
 
 # IXWebSocket
 set(USE_TLS OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/ixwebsocket)
 
 # stb (header-only)
