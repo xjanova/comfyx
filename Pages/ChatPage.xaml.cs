@@ -55,6 +55,15 @@ namespace ComfyX.Pages
             }
         }
 
+        private void QuickStart_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string prompt)
+            {
+                InputTextBox.Text = prompt;
+                SendMessage();
+            }
+        }
+
         private async void SendMessage()
         {
             string text = InputTextBox.Text?.Trim();
@@ -123,6 +132,10 @@ namespace ComfyX.Pages
                 if (_lastWorkflowJson != null && WorkflowParser.ValidateWorkflow(_lastWorkflowJson))
                 {
                     Logger.Info("Valid ComfyUI workflow detected in AI response.");
+
+                    // Pass workflow to MainWindow → NodeGraph
+                    if (Window.GetWindow(this) is MainWindow mw)
+                        mw.SetWorkflowJson(_lastWorkflowJson);
 
                     // Check if ComfyUI is connected and auto-queue
                     bool connected = await ComfyClient.Instance.CheckConnectionAsync();

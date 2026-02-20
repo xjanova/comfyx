@@ -53,9 +53,9 @@ namespace ComfyX
         private string _lastWorkflowJson;
 
         // ─── Lazy Page Instances ──────────────────────────────────────
-        private UserControl _chatPage;
-        private UserControl _nodeGraphPage;
-        private UserControl _previewPage;
+        private ChatPage _chatPage;
+        private NodeGraphPage _nodeGraphPage;
+        private PreviewPage _previewPage;
         private UserControl _logPage;
         private UserControl _settingsPage;
 
@@ -157,11 +157,11 @@ namespace ComfyX
             // Get or create the target page (real pages, not placeholders)
             UserControl targetPage = page switch
             {
-                Page.Chat      => _chatPage      ??= new Pages.ChatPage(),
-                Page.NodeGraph => _nodeGraphPage  ??= new Pages.NodeGraphPage(),
-                Page.Preview   => _previewPage    ??= new Pages.PreviewPage(),
-                Page.Log       => _logPage        ??= new Pages.LogPage(),
-                Page.Settings  => _settingsPage   ??= new Pages.SettingsPage(),
+                Page.Chat      => _chatPage      ??= new ChatPage(),
+                Page.NodeGraph => _nodeGraphPage  ??= new NodeGraphPage(),
+                Page.Preview   => _previewPage    ??= new PreviewPage(),
+                Page.Log       => _logPage        ??= new LogPage(),
+                Page.Settings  => _settingsPage   ??= new SettingsPage(),
                 _ => throw new ArgumentOutOfRangeException(nameof(page))
             };
 
@@ -358,6 +358,34 @@ namespace ComfyX
             }
         }
 
+        /// <summary>
+        /// Exposes the last workflow JSON for child pages to read.
+        /// </summary>
+        public string LastWorkflowJson => _lastWorkflowJson;
+
+        /// <summary>
+        /// Public navigation entry point for child pages.
+        /// </summary>
+        public void GoToPage(Page page) => NavigateTo(page);
+
+        /// <summary>
+        /// Sets the last workflow JSON and loads it into the NodeGraph page.
+        /// Called from ChatPage when AI generates a workflow, or from File Open.
+        /// </summary>
+        public void SetWorkflowJson(string json, bool navigateToGraph = false)
+        {
+            _lastWorkflowJson = json;
+
+            // Ensure NodeGraphPage exists and load the workflow
+            if (_nodeGraphPage == null)
+                _nodeGraphPage = new NodeGraphPage();
+
+            _nodeGraphPage.LoadWorkflow(json);
+
+            if (navigateToGraph)
+                NavigateTo(Page.NodeGraph);
+        }
+
         // ═══════════════════════════════════════════════════════════════
         // Connection Status
         // ═══════════════════════════════════════════════════════════════
@@ -421,16 +449,10 @@ namespace ComfyX
             _lastWorkflowJson = null;
 
             // Reset chat page messages
-            if (_chatPage is ChatPage chat)
-            {
-                chat.Messages.Clear();
-            }
+            _chatPage?.Messages.Clear();
 
             // Clear preview
-            if (_previewPage is PreviewPage preview)
-            {
-                preview.ClearPreview();
-            }
+            _previewPage?.ClearPreview();
 
             NavigateTo(Page.Chat);
             txtStatusBar.Text = "New workflow created.";
@@ -455,7 +477,7 @@ namespace ComfyX
                     // Validate it's parseable JSON
                     using (JsonDocument.Parse(json)) { }
 
-                    _lastWorkflowJson = json;
+                    SetWorkflowJson(json, navigateToGraph: true);
                     txtStatusBar.Text = $"Loaded: {IOPath.GetFileName(dlg.FileName)}";
                     Logger.Info($"Workflow loaded from: {dlg.FileName}");
                 }
@@ -555,10 +577,9 @@ namespace ComfyX
                                 string tempPath = IOPath.Combine(IOPath.GetTempPath(), $"comfyx_{filename}");
                                 IOFile.WriteAllBytes(tempPath, imageData);
 
-                                if (_previewPage is PreviewPage preview)
-                                {
-                                    preview.ShowImage(tempPath);
-                                }
+                                if (_previewPage == null)
+                                    _previewPage = new PreviewPage();
+                                _previewPage.ShowImage(tempPath);
                                 NavigateTo(Page.Preview);
                                 txtStatusBar.Text = $"Image ready: {filename}";
                                 Logger.Info($"Preview image loaded: {filename}");

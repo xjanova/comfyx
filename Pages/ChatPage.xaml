@@ -16,26 +16,239 @@
         <Grid Grid.Row="0">
 
             <!-- Welcome overlay (shown when no messages) -->
-            <StackPanel x:Name="WelcomePanel"
-                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Visibility="Visible">
-                <TextBlock Text="ComfyX"
-                           FontSize="32" FontWeight="Bold"
-                           Foreground="{StaticResource NeonCyanBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="AI-Powered ComfyUI Workflow Studio"
-                           FontSize="14"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,4" />
-                <TextBlock Text="Describe what you want to create and let AI build the workflow for you."
-                           FontSize="12"
-                           Foreground="{StaticResource TextMutedBrush}"
-                           HorizontalAlignment="Center"
-                           TextWrapping="Wrap"
-                           MaxWidth="360" />
-            </StackPanel>
+            <ScrollViewer x:Name="WelcomePanel"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Visibility="Visible">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MaxWidth="520"
+                            Margin="24,32,24,24">
+
+                    <!-- ===== Hero Section ===== -->
+                    <TextBlock Text="ComfyX"
+                               FontSize="48" FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                <GradientStop Color="#00F5FF" Offset="0" />
+                                <GradientStop Color="#FF00FF" Offset="1" />
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+
+                    <!-- Glowing robot circle -->
+                    <Border Width="72" Height="72"
+                            CornerRadius="36"
+                            Background="{StaticResource BgElevatedBrush}"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,16">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00F5FF"
+                                              BlurRadius="30"
+                                              ShadowDepth="0"
+                                              Opacity="0.6" />
+                        </Border.Effect>
+                        <TextBlock Text="&#x1F916;"
+                                   FontSize="36"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Subtitle -->
+                    <TextBlock Text="AI-Powered ComfyUI Workflow Studio"
+                               FontSize="16"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,28" />
+
+                    <!-- ===== Feature Cards ===== -->
+                    <UniformGrid Columns="3" Margin="0,0,0,0">
+                        <UniformGrid.Resources>
+                            <Style x:Key="CardTitle" TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="14" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="0,8,0,6" />
+                            </Style>
+                            <Style x:Key="CardDesc" TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="11" />
+                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                <Setter Property="TextWrapping" Value="Wrap" />
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            </Style>
+                        </UniformGrid.Resources>
+
+                        <!-- Card 1: AI Workflow -->
+                        <Border Background="{StaticResource BgElevatedBrush}"
+                                CornerRadius="12"
+                                Padding="20"
+                                BorderThickness="1"
+                                Margin="0,0,6,0">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#00F5FF" Opacity="0.3" />
+                            </Border.BorderBrush>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12"
+                                                  ShadowDepth="0"
+                                                  Opacity="0.3"
+                                                  Color="#00F5FF" />
+                            </Border.Effect>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="&#x1F916;" FontSize="28" HorizontalAlignment="Center" />
+                                <TextBlock Text="AI Workflow"
+                                           Style="{StaticResource CardTitle}"
+                                           Foreground="{StaticResource NeonCyanBrush}" />
+                                <TextBlock Text="Describe what you want, AI builds the ComfyUI workflow for you"
+                                           Style="{StaticResource CardDesc}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Image Generation -->
+                        <Border Background="{StaticResource BgElevatedBrush}"
+                                CornerRadius="12"
+                                Padding="20"
+                                BorderThickness="1"
+                                Margin="6,0,6,0">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#FF00FF" Opacity="0.3" />
+                            </Border.BorderBrush>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12"
+                                                  ShadowDepth="0"
+                                                  Opacity="0.3"
+                                                  Color="#FF00FF" />
+                            </Border.Effect>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="&#x1F3A8;" FontSize="28" HorizontalAlignment="Center" />
+                                <TextBlock Text="Image Generation"
+                                           Style="{StaticResource CardTitle}"
+                                           Foreground="{StaticResource NeonPinkBrush}" />
+                                <TextBlock Text="txt2img, img2img, inpainting, upscaling — all supported"
+                                           Style="{StaticResource CardDesc}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 3: Real-time Preview -->
+                        <Border Background="{StaticResource BgElevatedBrush}"
+                                CornerRadius="12"
+                                Padding="20"
+                                BorderThickness="1"
+                                Margin="6,0,0,0">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#00FF88" Opacity="0.3" />
+                            </Border.BorderBrush>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12"
+                                                  ShadowDepth="0"
+                                                  Opacity="0.3"
+                                                  Color="#00FF88" />
+                            </Border.Effect>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="&#x26A1;" FontSize="28" HorizontalAlignment="Center" />
+                                <TextBlock Text="Real-time Preview"
+                                           Style="{StaticResource CardTitle}"
+                                           Foreground="{StaticResource SuccessBrush}" />
+                                <TextBlock Text="See generation progress live with WebSocket connection"
+                                           Style="{StaticResource CardDesc}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- ===== Quick Start Section ===== -->
+                    <TextBlock Text="Quick Start"
+                               FontSize="12"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,24,0,10" />
+
+                    <WrapPanel HorizontalAlignment="Center"
+                               Margin="0,0,0,0">
+                        <Button Tag="Generate a portrait photo"
+                                Click="QuickStart_Click"
+                                Cursor="Hand"
+                                Margin="4"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0">
+                            <Border Background="#0D0D1A"
+                                    CornerRadius="20"
+                                    Padding="16,8"
+                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="&#x2728; Generate a portrait photo"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12"
+                                           Cursor="Hand" />
+                            </Border>
+                        </Button>
+                        <Button Tag="Create anime artwork"
+                                Click="QuickStart_Click"
+                                Cursor="Hand"
+                                Margin="4"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0">
+                            <Border Background="#0D0D1A"
+                                    CornerRadius="20"
+                                    Padding="16,8"
+                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="&#x1F3A8; Create anime artwork"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12"
+                                           Cursor="Hand" />
+                            </Border>
+                        </Button>
+                        <Button Tag="Upscale an image"
+                                Click="QuickStart_Click"
+                                Cursor="Hand"
+                                Margin="4"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0">
+                            <Border Background="#0D0D1A"
+                                    CornerRadius="20"
+                                    Padding="16,8"
+                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="&#x1F50D; Upscale an image"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12"
+                                           Cursor="Hand" />
+                            </Border>
+                        </Button>
+                        <Button Tag="Inpaint a background"
+                                Click="QuickStart_Click"
+                                Cursor="Hand"
+                                Margin="4"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0">
+                            <Border Background="#0D0D1A"
+                                    CornerRadius="20"
+                                    Padding="16,8"
+                                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                                    BorderThickness="1">
+                                <TextBlock Text="&#x1F58C; Inpaint a background"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12"
+                                           Cursor="Hand" />
+                            </Border>
+                        </Button>
+                    </WrapPanel>
+
+                    <!-- ===== Footer ===== -->
+                    <TextBlock Text="Powered by ComfyUI + AI"
+                               FontSize="10"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,0" />
+
+                </StackPanel>
+            </ScrollViewer>
 
             <!-- Chat messages list -->
             <Border x:Name="ChatContainer"
