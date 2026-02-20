@@ -1,0 +1,289 @@
+<UserControl x:Class="ComfyX.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="600">
+
+    <Grid Background="{StaticResource BgDeepBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="Settings"
+                   FontSize="20" FontWeight="Bold"
+                   Foreground="{StaticResource NeonPurpleBrush}"
+                   Margin="20,16,20,8" />
+
+        <!-- TabControl -->
+        <TabControl Grid.Row="1"
+                    Margin="16,0,16,0"
+                    Background="Transparent"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0">
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- ComfyUI Tab                                       -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <TabItem Header="ComfyUI" Style="{StaticResource ModernTabItem}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,16,0,0">
+                    <StackPanel Margin="8,8,8,8">
+
+                        <!-- Mode -->
+                        <TextBlock Text="Mode"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <ComboBox x:Name="ComfyModeCombo"
+                                  Style="{StaticResource ModernComboBox}"
+                                  Width="200" HorizontalAlignment="Left"
+                                  Margin="0,0,0,16"
+                                  SelectionChanged="ComfyModeCombo_SelectionChanged">
+                            <ComboBoxItem Content="Embedded" />
+                            <ComboBoxItem Content="External" />
+                        </ComboBox>
+
+                        <!-- Port -->
+                        <TextBlock Text="Port"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <TextBox x:Name="ComfyPortTextBox"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Width="120" HorizontalAlignment="Left"
+                                 Margin="0,0,0,16" />
+
+                        <!-- Auto-start -->
+                        <CheckBox x:Name="ComfyAutoStartCheck"
+                                  Style="{StaticResource ModernCheckBox}"
+                                  Content="Auto-start ComfyUI on launch"
+                                  Margin="0,0,0,16" />
+
+                        <!-- External URL (shown only when mode=External) -->
+                        <StackPanel x:Name="ExternalUrlPanel" Visibility="Collapsed">
+                            <TextBlock Text="External URL"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="ComfyExternalUrlTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="350" HorizontalAlignment="Left"
+                                     Margin="0,0,0,16" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- AI Engine Tab                                     -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <TabItem Header="AI Engine" Style="{StaticResource ModernTabItem}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,16,0,0">
+                    <StackPanel Margin="8,8,8,8">
+
+                        <!-- Provider -->
+                        <TextBlock Text="Provider"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <ComboBox x:Name="AiProviderCombo"
+                                  Style="{StaticResource ModernComboBox}"
+                                  Width="200" HorizontalAlignment="Left"
+                                  Margin="0,0,0,16"
+                                  SelectionChanged="AiProviderCombo_SelectionChanged">
+                            <ComboBoxItem Content="OpenAI" />
+                            <ComboBoxItem Content="Claude" />
+                            <ComboBoxItem Content="Gemini" />
+                            <ComboBoxItem Content="Local" />
+                        </ComboBox>
+
+                        <!-- OpenAI section -->
+                        <StackPanel x:Name="OpenAiPanel">
+                            <TextBlock Text="OpenAI API Key"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <PasswordBox x:Name="OpenAiKeyBox"
+                                         Background="{StaticResource BgInputBrush}"
+                                         Foreground="{StaticResource TextPrimaryBrush}"
+                                         BorderBrush="{StaticResource BorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="10,8"
+                                         FontSize="13"
+                                         Width="350" HorizontalAlignment="Left"
+                                         Margin="0,0,0,8" />
+                            <TextBlock Text="Model"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="OpenAiModelTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="250" HorizontalAlignment="Left"
+                                     Margin="0,0,0,16" />
+                        </StackPanel>
+
+                        <!-- Claude section -->
+                        <StackPanel x:Name="ClaudePanel" Visibility="Collapsed">
+                            <TextBlock Text="Claude API Key"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <PasswordBox x:Name="ClaudeKeyBox"
+                                         Background="{StaticResource BgInputBrush}"
+                                         Foreground="{StaticResource TextPrimaryBrush}"
+                                         BorderBrush="{StaticResource BorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="10,8"
+                                         FontSize="13"
+                                         Width="350" HorizontalAlignment="Left"
+                                         Margin="0,0,0,8" />
+                            <TextBlock Text="Model"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="ClaudeModelTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="250" HorizontalAlignment="Left"
+                                     Margin="0,0,0,16" />
+                        </StackPanel>
+
+                        <!-- Gemini section -->
+                        <StackPanel x:Name="GeminiPanel" Visibility="Collapsed">
+                            <TextBlock Text="Gemini API Key"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <PasswordBox x:Name="GeminiKeyBox"
+                                         Background="{StaticResource BgInputBrush}"
+                                         Foreground="{StaticResource TextPrimaryBrush}"
+                                         BorderBrush="{StaticResource BorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="10,8"
+                                         FontSize="13"
+                                         Width="350" HorizontalAlignment="Left"
+                                         Margin="0,0,0,8" />
+                            <TextBlock Text="Model"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="GeminiModelTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="250" HorizontalAlignment="Left"
+                                     Margin="0,0,0,16" />
+                        </StackPanel>
+
+                        <!-- Local AI section -->
+                        <StackPanel x:Name="LocalAiPanel" Visibility="Collapsed">
+                            <TextBlock Text="Model Path"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="LocalModelPathTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="400" HorizontalAlignment="Left"
+                                     Margin="0,0,0,12" />
+
+                            <TextBlock Text="GPU Layers"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="LocalGpuLayersTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="100" HorizontalAlignment="Left"
+                                     Margin="0,0,0,12" />
+
+                            <TextBlock Text="Context Size"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12" Margin="0,0,0,4" />
+                            <TextBox x:Name="LocalContextSizeTextBox"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="120" HorizontalAlignment="Left"
+                                     Margin="0,0,0,16" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- Appearance Tab                                    -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <TabItem Header="Appearance" Style="{StaticResource ModernTabItem}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,16,0,0">
+                    <StackPanel Margin="8,8,8,8">
+
+                        <!-- Theme -->
+                        <TextBlock Text="Theme"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <ComboBox x:Name="ThemeCombo"
+                                  Style="{StaticResource ModernComboBox}"
+                                  Width="200" HorizontalAlignment="Left"
+                                  IsEnabled="False"
+                                  Margin="0,0,0,4">
+                            <ComboBoxItem Content="Modern" IsSelected="True" />
+                            <ComboBoxItem Content="Midnight" />
+                            <ComboBoxItem Content="Light" />
+                        </ComboBox>
+                        <TextBlock Text="Only Modern theme is available in this version."
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11" FontStyle="Italic"
+                                   Margin="0,0,0,16" />
+
+                        <!-- UI Scale -->
+                        <TextBlock Text="UI Scale"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MaxWidth="300" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Slider x:Name="UiScaleSlider"
+                                    Grid.Column="0"
+                                    Minimum="0.8" Maximum="2.0"
+                                    TickFrequency="0.1"
+                                    IsSnapToTickEnabled="True"
+                                    Value="1.0"
+                                    VerticalAlignment="Center"
+                                    ValueChanged="UiScaleSlider_ValueChanged" />
+                            <TextBlock x:Name="UiScaleLabel"
+                                       Grid.Column="1"
+                                       Text="1.0x"
+                                       Foreground="{StaticResource NeonCyanBrush}"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0,0,0"
+                                       MinWidth="40" />
+                        </Grid>
+
+                        <!-- Language -->
+                        <TextBlock Text="Language"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,4" />
+                        <ComboBox x:Name="LanguageCombo"
+                                  Style="{StaticResource ModernComboBox}"
+                                  Width="200" HorizontalAlignment="Left"
+                                  Margin="0,0,0,16">
+                            <ComboBoxItem Content="English" Tag="en" />
+                            <ComboBoxItem Content="Thai" Tag="th" />
+                        </ComboBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Bottom action buttons -->
+        <Border Grid.Row="2"
+                Background="{StaticResource BgPrimaryBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton"
+                        Style="{StaticResource ModernButton}"
+                        Content="Cancel"
+                        Padding="20,8"
+                        Margin="0,0,10,0"
+                        Click="CancelButton_Click" />
+                <Button x:Name="SaveButton"
+                        Style="{StaticResource PrimaryButton}"
+                        Content="Save"
+                        Padding="24,8"
+                        Click="SaveButton_Click" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

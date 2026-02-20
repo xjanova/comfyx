@@ -1,0 +1,158 @@
+<UserControl x:Class="ComfyX.Pages.ChatPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="500">
+
+    <Grid Background="{StaticResource BgDeepBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Welcome / Messages Area -->
+        <Grid Grid.Row="0">
+
+            <!-- Welcome overlay (shown when no messages) -->
+            <StackPanel x:Name="WelcomePanel"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Visibility="Visible">
+                <TextBlock Text="ComfyX"
+                           FontSize="32" FontWeight="Bold"
+                           Foreground="{StaticResource NeonCyanBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8" />
+                <TextBlock Text="AI-Powered ComfyUI Workflow Studio"
+                           FontSize="14"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4" />
+                <TextBlock Text="Describe what you want to create and let AI build the workflow for you."
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="360" />
+            </StackPanel>
+
+            <!-- Chat messages list -->
+            <Border x:Name="ChatContainer"
+                    Margin="12,12,12,4"
+                    Background="#FF040408"
+                    BorderBrush="{StaticResource NeonCyanBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="8"
+                    Visibility="Collapsed">
+                <ScrollViewer x:Name="ChatScrollViewer"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="MessagesItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="4,4,4,4"
+                                        Padding="12,8"
+                                        CornerRadius="10"
+                                        MaxWidth="380">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource BgElevatedBrush}" />
+                                            <Setter Property="HorizontalAlignment" Value="Left" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Role}" Value="user">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <SolidColorBrush Color="#FF0A3D5C" />
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <!-- Role label -->
+                                        <TextBlock FontSize="10" FontWeight="SemiBold" Margin="0,0,0,4">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Setter Property="Text" Value="AI" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Role}" Value="user">
+                                                            <Setter Property="Text" Value="You" />
+                                                            <Setter Property="Foreground" Value="{StaticResource NeonCyanBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <!-- Message content -->
+                                        <TextBlock Text="{Binding Content}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="13"
+                                                   LineHeight="20">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Role}" Value="user">
+                                                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <!-- Timestamp -->
+                                        <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
+                                                   FontSize="9"
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Input Bar -->
+        <Border Grid.Row="1"
+                Background="{StaticResource BgPrimaryBrush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Margin="0,0,8,0">
+                    <TextBox x:Name="InputTextBox"
+                             Style="{StaticResource ModernTextBox}"
+                             VerticalAlignment="Center"
+                             KeyDown="InputTextBox_KeyDown" />
+                    <!-- Placeholder text overlay -->
+                    <TextBlock x:Name="PlaceholderText"
+                               Text="Describe your workflow..."
+                               Foreground="{StaticResource TextMutedBrush}"
+                               FontSize="13"
+                               VerticalAlignment="Center"
+                               Margin="14,0,0,0"
+                               IsHitTestVisible="False" />
+                </Grid>
+
+                <Button x:Name="SendButton"
+                        Grid.Column="1"
+                        Style="{StaticResource PrimaryButton}"
+                        Content="Send"
+                        Padding="20,8"
+                        Click="SendButton_Click" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

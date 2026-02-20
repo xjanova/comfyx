@@ -1,21 +1,15 @@
-# Build
-build/
-cmake-build-*/
+# .NET Build output
+bin/
+obj/
+publish/
 out/
-*.obj
-*.o
-*.exe
 *.dll
-*.lib
-*.a
-*.so
-*.dylib
+*.exe
+*.pdb
 
 # IDE
 .vs/
 .vscode/settings.json
-*.sln
-*.vcxproj*
 *.user
 .idea/
 *.swp
@@ -23,6 +17,7 @@ out/
 
 # Runtime data (portable, user-specific)
 data/config.json
+data/license.key
 data/license.dat
 data/workflows/*
 data/history/*
@@ -35,9 +30,6 @@ runtime/comfyui/
 runtime/models/
 runtime/custom_nodes/
 runtime/output/
-
-# External dependencies (managed by git submodules)
-# external/ directories are submodules
 
 # OS
 .DS_Store
